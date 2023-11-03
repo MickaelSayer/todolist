@@ -97,4 +97,4 @@ function _optionControl(options, param, type = null) {
     return options?.[param]?.[type];
 }
 
-export default useForm
+export default useForm;

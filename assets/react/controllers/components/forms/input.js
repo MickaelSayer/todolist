@@ -1,14 +1,14 @@
-import React, { forwardRef } from "react";
+import React from "react";
 
-const Input = forwardRef(function CustomInput({ errorMessage, ...props }, ref) {
+const Input = ({ errorMessage, ...props }) => {
     return (
         <>
-            <input {...props} ref={ref} />
+            <input {...props} />
             {errorMessage && <div id={props.id} className="invalid-feedback">
                 {errorMessage}
             </div>}
         </>
     );
-});
+};
 
-export { Input };
+export default Input;

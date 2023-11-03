@@ -1,8 +1,8 @@
-import React, { StrictMode, useId, useRef, useState } from "react";
+import React, { StrictMode, useId, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { Input } from "./components/forms/input";
-import { Button } from "./components/forms/button";
-import { Label } from "./components/forms/label";
+import Button from "./components/forms/button";
+import Input from "./components/forms/input";
+import Label from "./components/forms/label";
 import useForm from "./hooks/useForm";
 
 function Body() {
@@ -70,13 +70,13 @@ const TaskCreationContainer = ({ setDatas }) => {
     return (
         <>
             {!isCreate ? (
-                <button
+                <Button
                     type="button"
                     onClick={() => setIsCreate(true)}
                     className="btn btn-primary d-block m-auto mb-5"
                 >
                     Create a task
-                </button>
+                </Button>
             ) : (
                 <TaskCreationForm
                     setDatas={setDatas}
@@ -98,20 +98,20 @@ const TaskCreationForm = ({ setIsCreate, setDatas }) => {
         const dataTitle = formData.get("title");
 
         const listsInputSave = [];
-        listsInputTask.map(list => {
-            listsInputSave.push(formData.get(list.id))
-        })
+        listsInputTask.map((list) => {
+            listsInputSave.push(formData.get(list.id));
+        });
 
-        setDatas(prevDatas => [
+        setDatas((prevDatas) => [
             ...prevDatas,
             {
                 id: uuidv4(),
                 title: dataTitle,
-                lists: listsInputSave
-            }
-        ])
+                lists: listsInputSave,
+            },
+        ]);
 
-        setIsCreate(false)
+        setIsCreate(false);
     };
 
     return (
@@ -159,7 +159,7 @@ const FormInputTitle = ({ register, errors }) => {
                 {...register("title", {
                     required: {
                         message: "The title field is compulsory",
-                    }
+                    },
                 })}
                 id="title"
                 className={`form-control ${errors.title ? "is-invalid" : ""}`}
@@ -242,7 +242,7 @@ const TaskInput = ({ register, errors, id, handleDeleteTask }) => {
                     {...register(id, {
                         required: {
                             message: "The title field is compulsory",
-                        }
+                        },
                     })}
                     id={id}
                     className={`form-control ${errors[id] ? "is-invalid" : ""}`}
@@ -336,21 +336,21 @@ const TaskBody = ({ list, keyId, setCountChecked }) => {
     return (
         <tr className="border border-ligth">
             <th className="fw-light">
-                <input
+                <Input
                     className="form-check-input me-3"
                     type="checkbox"
                     checked={listChecked}
                     onChange={handlerListChecked}
                     id={keyId}
                 />
-                <label
+                <Label
                     className={`form-check-label ${
                         listChecked ? "text-decoration-line-through" : ""
                     }`}
                     htmlFor={keyId}
                 >
                     {list}
-                </label>
+                </Label>
             </th>
         </tr>
     );
