@@ -4,13 +4,30 @@ import Button from "./components/forms/button";
 import Input from "./components/forms/input";
 import Label from "./components/forms/label";
 import useForm from "./hooks/useForm";
+import { FormContext, useFormContext } from "./context/useFormContext";
+import { LazyMotion, m, AnimatePresence } from "framer-motion";
+import {
+    animateButton,
+    animateFormErrorsTasks,
+    animateFormInputError,
+    animateNewInputTask,
+    animateFormDisplay,
+} from "./framerMotion/animate";
 
 function Body() {
     return (
         <StrictMode>
             <section>
                 <h1 className="mb-5">My tasks</h1>
-                <TodoTable />
+                <LazyMotion
+                    features={() =>
+                        import("./framerMotion/features").then(
+                            (res) => res.default
+                        )
+                    }
+                >
+                    <TodoTable />
+                </LazyMotion>
             </section>
         </StrictMode>
     );
@@ -69,26 +86,27 @@ const TaskCreationContainer = ({ setDatas }) => {
 
     return (
         <>
-            {!isCreate ? (
-                <Button
-                    type="button"
-                    onClick={() => setIsCreate(true)}
-                    className="btn btn-primary d-block m-auto mb-5"
-                >
-                    Create a task
-                </Button>
-            ) : (
+            {isCreate ? (
                 <TaskCreationForm
                     setDatas={setDatas}
                     setIsCreate={setIsCreate}
                 />
+            ) : (
+                <Button
+                    {...animateButton()}
+                    type="button"
+                    onClick={() => setIsCreate((prevIsCreate) => !prevIsCreate)}
+                    className="btn btn-primary d-block m-auto mb-5"
+                >
+                    Create a task
+                </Button>
             )}
         </>
     );
 };
 
 const TaskCreationForm = ({ setIsCreate, setDatas }) => {
-    const { register, handleSubmit, errors } = useForm();
+    const { register, handleSubmit, errors, handleResetErrorField } = useForm();
     const [countTasks, setCountTasks] = useState(1);
     const [listsInputTask, setListsInputTask] = useState([
         { id: `tasks_${countTasks}` },
@@ -111,51 +129,62 @@ const TaskCreationForm = ({ setIsCreate, setDatas }) => {
             },
         ]);
 
-        setIsCreate(false);
+        setIsCreate((prevIsCreate) => !prevIsCreate);
     };
 
     return (
-        <form
-            noValidate
-            className="mb-5 border border-ligth rounded-2 p-5 position-relative"
-            onSubmit={(e) => handleSubmit(e, onSubmit)}
-        >
-            <h2 className="position-absolute top-0 start-50 translate-middle bg-white px-4 border-start border-end">
-                Creation of a task
-            </h2>
-
-            <FormInputTitle register={register} errors={errors} />
-            <FormInputsTasks
-                register={register}
-                errors={errors}
-                listsInputTask={listsInputTask}
-                setListsInputTask={setListsInputTask}
-                countTasks={countTasks}
-                setCountTasks={setCountTasks}
-            />
-
-            <Button type="submit" className="btn btn-primary me-3">
-                Save
-            </Button>
-
-            <Button
-                onClick={() => setIsCreate(false)}
-                type="button"
-                className="btn btn-danger"
+        <AnimatePresence>
+            <m.form
+                {...animateFormDisplay()}
+                noValidate
+                className="mb-5 border border-ligth rounded-2 p-5 position-relative"
+                onSubmit={(e) => handleSubmit(e, onSubmit)}
             >
-                Cancel
-            </Button>
-        </form>
+                <h2 className="position-absolute top-0 start-50 translate-middle bg-white px-4 border-start border-end">
+                    Creation of a task
+                </h2>
+
+                <FormContext.Provider value={{ register, errors, handleResetErrorField }}>
+                    <FormInputTitle />
+                    <FormInputsTasks
+                        listsInputTask={listsInputTask}
+                        setListsInputTask={setListsInputTask}
+                        countTasks={countTasks}
+                        setCountTasks={setCountTasks}
+                    />
+                </FormContext.Provider>
+
+                <Button
+                    {...animateButton()}
+                    type="submit"
+                    className="btn btn-primary me-3"
+                >
+                    Save
+                </Button>
+
+                <Button
+                    {...animateButton()}
+                    onClick={() => setIsCreate((prevIsCreate) => !prevIsCreate)}
+                    type="button"
+                    className="btn btn-danger"
+                >
+                    Cancel
+                </Button>
+            </m.form>
+        </AnimatePresence>
     );
 };
 
-const FormInputTitle = ({ register, errors }) => {
+const FormInputTitle = () => {
+    const { register, errors, handleResetErrorField } = useFormContext();
+
     return (
         <div className="mb-3">
-            <Label htmlFor="title" className="form-label">
+            <Label htmlFor="title" className="form-label fw-medium">
                 Title
             </Label>
             <Input
+                {...animateFormInputError(errors.title)}
                 {...register("title", {
                     required: {
                         message: "The title field is compulsory",
@@ -164,19 +193,24 @@ const FormInputTitle = ({ register, errors }) => {
                 id="title"
                 className={`form-control ${errors.title ? "is-invalid" : ""}`}
                 type="text"
+                onClick={() => {handleResetErrorField('title')}}
             />
-            {errors.title && (
-                <div id="title" className="invalid-feedback">
-                    {errors.title}
-                </div>
-            )}
+            <AnimatePresence>
+                {errors.title && (
+                    <m.div
+                        {...animateFormErrorsTasks()}
+                        id="title"
+                        className="invalid-feedback"
+                    >
+                        {errors.title}
+                    </m.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
 
 const FormInputsTasks = ({
-    register,
-    errors,
     listsInputTask,
     setListsInputTask,
     countTasks,
@@ -199,17 +233,22 @@ const FormInputsTasks = ({
 
     return (
         <div className="mb-3">
-            {listsInputTask.map((listInput) => (
-                <div key={listInput.id} className="mb-1">
-                    <TaskInput
-                        register={register}
-                        errors={errors}
-                        id={listInput.id}
-                        handleDeleteTask={handleDeleteTask}
-                    />
-                </div>
-            ))}
+            <AnimatePresence>
+                {listsInputTask.map((listInput) => (
+                    <m.div
+                        {...animateNewInputTask(countTasks)}
+                        key={listInput.id}
+                        className="mb-1"
+                    >
+                        <TaskInput
+                            id={listInput.id}
+                            handleDeleteTask={handleDeleteTask}
+                        />
+                    </m.div>
+                ))}
+            </AnimatePresence>
             <Button
+                {...animateButton()}
                 type="button"
                 className="btn btn-success mt-3"
                 onClick={handleAddTasks}
@@ -220,11 +259,13 @@ const FormInputsTasks = ({
     );
 };
 
-const TaskInput = ({ register, errors, id, handleDeleteTask }) => {
+const TaskInput = ({ id, handleDeleteTask }) => {
+    const { register, errors, handleResetErrorField } = useFormContext();
+
     return (
         <>
             {id === "tasks_1" && (
-                <Label htmlFor={id} className="form-label">
+                <Label htmlFor={id} className="form-label fw-medium">
                     Tasks
                 </Label>
             )}
@@ -238,22 +279,31 @@ const TaskInput = ({ register, errors, id, handleDeleteTask }) => {
                         <i className="bi bi-trash"></i>
                     </Button>
                 )}
+
                 <Input
+                    {...animateFormInputError(errors[id])}
                     {...register(id, {
                         required: {
-                            message: "The title field is compulsory",
+                            message: "The task field is compulsory",
                         },
                     })}
                     id={id}
                     className={`form-control ${errors[id] ? "is-invalid" : ""}`}
                     type="text"
+                    onClick={() => handleResetErrorField(id)}
                 />
             </div>
-            {errors[id] && (
-                <div id={id} className="invalid-feedback d-block">
-                    {errors[id]}
-                </div>
-            )}
+            <AnimatePresence>
+                {errors[id] && (
+                    <m.div
+                        {...animateFormErrorsTasks()}
+                        id={id}
+                        className="invalid-feedback d-block"
+                    >
+                        {errors[id]}
+                    </m.div>
+                )}
+            </AnimatePresence>
         </>
     );
 };

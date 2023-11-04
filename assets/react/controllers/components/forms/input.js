@@ -1,12 +1,10 @@
 import React from "react";
+import { m } from "framer-motion";
 
-const Input = ({ errorMessage, ...props }) => {
+const Input = (props) => {
     return (
         <>
-            <input {...props} />
-            {errorMessage && <div id={props.id} className="invalid-feedback">
-                {errorMessage}
-            </div>}
+            <m.input {...props} />
         </>
     );
 };

@@ -3,7 +3,7 @@ import { useState } from "react";
 /**
  * Manage the verification of the form fields
  * 
- * @returns {object} { register, handleSubmit, errors }
+ * @returns {object} { register, handleSubmit, errors, resetErrorField }
  */
 const useForm = () => {
     const registeredFields = [];
@@ -36,7 +36,7 @@ const useForm = () => {
      * 
      * @param {object} e 
      */
-    const handleSubmit = (e, callback) => {
+    const handleSubmit = (e, onSubmit) => {
         e.preventDefault()
         const form = e.target;
         const formData = new FormData(form)
@@ -73,11 +73,25 @@ const useForm = () => {
         setErrors(errorsFields)
 
         if (Object.keys(errorsFields).length === 0) {
-            callback(formData)
+            onSubmit(formData)
         }
     }
 
-    return { register, handleSubmit, errors };
+    /**
+     * Delete form errors on the click on the field
+     * 
+     * @param {string} key The key to the field
+     */
+    const handleResetErrorField = (key) => {
+        setErrors((prevErrors) => {
+            const updatedErrors = { ...prevErrors };
+            delete updatedErrors[key];
+
+            return updatedErrors;
+        });
+    }
+
+    return { register, handleSubmit, errors, handleResetErrorField };
 };
 
 /**
