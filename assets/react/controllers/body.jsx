@@ -289,9 +289,7 @@ const ListsTasks = ({ task }) => {
             <HeaderListTask task={task} countChecked={countChecked} />
             <li className="list-group">
                 <ul className="p-0">
-                    {task.lists.map((list, index) => {
-                        listMap(list, index);
-                    })}
+                    {task.lists.map((list, index) => listMap(list, index))}
                 </ul>
             </li>
         </ul>
