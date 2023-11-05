@@ -1,8 +1,7 @@
 import React from "react";
-import { m } from "framer-motion";
 
 const Button = (props) => {
-    return <m.button {...props}>{props.children}</m.button>;
+    return <button {...props}>{props.children}</button>;
 }
 
 export default Button;

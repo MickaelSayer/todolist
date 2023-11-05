@@ -5,29 +5,13 @@ import Input from "./components/forms/input";
 import Label from "./components/forms/label";
 import useForm from "./hooks/useForm";
 import { FormContext, useFormContext } from "./context/useFormContext";
-import { LazyMotion, m, AnimatePresence } from "framer-motion";
-import {
-    animateButton,
-    animateFormErrorsTasks,
-    animateFormInputError,
-    animateNewInputTask,
-    animateFormDisplay,
-} from "./framerMotion/animate";
 
 function Body() {
     return (
         <StrictMode>
             <section>
                 <h1 className="mb-5">My tasks</h1>
-                <LazyMotion
-                    features={() =>
-                        import("./framerMotion/features").then(
-                            (res) => res.default
-                        )
-                    }
-                >
-                    <TodoTable />
-                </LazyMotion>
+                <TodoTable />
             </section>
         </StrictMode>
     );
@@ -93,7 +77,6 @@ const TaskCreationContainer = ({ setDatas }) => {
                 />
             ) : (
                 <Button
-                    {...animateButton()}
                     type="button"
                     onClick={() => setIsCreate((prevIsCreate) => !prevIsCreate)}
                     className="btn btn-primary d-block m-auto mb-5"
@@ -133,45 +116,39 @@ const TaskCreationForm = ({ setIsCreate, setDatas }) => {
     };
 
     return (
-        <AnimatePresence>
-            <m.form
-                {...animateFormDisplay()}
-                noValidate
-                className="mb-5 border border-ligth rounded-2 p-5 position-relative"
-                onSubmit={(e) => handleSubmit(e, onSubmit)}
+        <form
+            noValidate
+            className="mb-5 border border-ligth rounded-2 p-5 position-relative"
+            onSubmit={(e) => handleSubmit(e, onSubmit)}
+        >
+            <h2 className="position-absolute top-0 start-50 translate-middle bg-white px-4 border-start border-end">
+                Creation of a task
+            </h2>
+
+            <FormContext.Provider
+                value={{ register, errors, handleResetErrorField }}
             >
-                <h2 className="position-absolute top-0 start-50 translate-middle bg-white px-4 border-start border-end">
-                    Creation of a task
-                </h2>
+                <FormInputTitle />
+                <FormInputsTasks
+                    listsInputTask={listsInputTask}
+                    setListsInputTask={setListsInputTask}
+                    countTasks={countTasks}
+                    setCountTasks={setCountTasks}
+                />
+            </FormContext.Provider>
 
-                <FormContext.Provider value={{ register, errors, handleResetErrorField }}>
-                    <FormInputTitle />
-                    <FormInputsTasks
-                        listsInputTask={listsInputTask}
-                        setListsInputTask={setListsInputTask}
-                        countTasks={countTasks}
-                        setCountTasks={setCountTasks}
-                    />
-                </FormContext.Provider>
+            <Button type="submit" className="btn btn-primary me-3">
+                Save
+            </Button>
 
-                <Button
-                    {...animateButton()}
-                    type="submit"
-                    className="btn btn-primary me-3"
-                >
-                    Save
-                </Button>
-
-                <Button
-                    {...animateButton()}
-                    onClick={() => setIsCreate((prevIsCreate) => !prevIsCreate)}
-                    type="button"
-                    className="btn btn-danger"
-                >
-                    Cancel
-                </Button>
-            </m.form>
-        </AnimatePresence>
+            <Button
+                onClick={() => setIsCreate((prevIsCreate) => !prevIsCreate)}
+                type="button"
+                className="btn btn-danger"
+            >
+                Cancel
+            </Button>
+        </form>
     );
 };
 
@@ -184,7 +161,6 @@ const FormInputTitle = () => {
                 Title
             </Label>
             <Input
-                {...animateFormInputError(errors.title)}
                 {...register("title", {
                     required: {
                         message: "The title field is compulsory",
@@ -193,19 +169,16 @@ const FormInputTitle = () => {
                 id="title"
                 className={`form-control ${errors.title ? "is-invalid" : ""}`}
                 type="text"
-                onClick={() => {handleResetErrorField('title')}}
+                onClick={() => {
+                    handleResetErrorField("title");
+                }}
             />
-            <AnimatePresence>
-                {errors.title && (
-                    <m.div
-                        {...animateFormErrorsTasks()}
-                        id="title"
-                        className="invalid-feedback"
-                    >
-                        {errors.title}
-                    </m.div>
-                )}
-            </AnimatePresence>
+
+            {errors.title && (
+                <div id="title" className="invalid-feedback">
+                    {errors.title}
+                </div>
+            )}
         </div>
     );
 };
@@ -233,22 +206,15 @@ const FormInputsTasks = ({
 
     return (
         <div className="mb-3">
-            <AnimatePresence>
-                {listsInputTask.map((listInput) => (
-                    <m.div
-                        {...animateNewInputTask(countTasks)}
-                        key={listInput.id}
-                        className="mb-1"
-                    >
-                        <TaskInput
-                            id={listInput.id}
-                            handleDeleteTask={handleDeleteTask}
-                        />
-                    </m.div>
-                ))}
-            </AnimatePresence>
+            {listsInputTask.map((listInput) => (
+                <div key={listInput.id} className="mb-1">
+                    <TaskInput
+                        id={listInput.id}
+                        handleDeleteTask={handleDeleteTask}
+                    />
+                </div>
+            ))}
             <Button
-                {...animateButton()}
                 type="button"
                 className="btn btn-success mt-3"
                 onClick={handleAddTasks}
@@ -281,7 +247,6 @@ const TaskInput = ({ id, handleDeleteTask }) => {
                 )}
 
                 <Input
-                    {...animateFormInputError(errors[id])}
                     {...register(id, {
                         required: {
                             message: "The task field is compulsory",
@@ -293,17 +258,11 @@ const TaskInput = ({ id, handleDeleteTask }) => {
                     onClick={() => handleResetErrorField(id)}
                 />
             </div>
-            <AnimatePresence>
-                {errors[id] && (
-                    <m.div
-                        {...animateFormErrorsTasks()}
-                        id={id}
-                        className="invalid-feedback d-block"
-                    >
-                        {errors[id]}
-                    </m.div>
-                )}
-            </AnimatePresence>
+            {errors[id] && (
+                <div id={id} className="invalid-feedback d-block">
+                    {errors[id]}
+                </div>
+            )}
         </>
     );
 };
