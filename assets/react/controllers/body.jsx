@@ -59,7 +59,7 @@ const TodoTable = () => {
         <>
             <TaskCreationContainer setDatas={setDatas} />
             {datas.map((task) => (
-                <TasksTable key={task.id} task={task} />
+                <ListsTasks key={task.id} task={task} />
             ))}
         </>
     );
@@ -128,8 +128,8 @@ const TaskCreationForm = ({ setIsCreate, setDatas }) => {
             <FormContext.Provider
                 value={{ register, errors, handleResetErrorField }}
             >
-                <FormInputTitle />
-                <FormInputsTasks
+                <InputTitle />
+                <InputsTasks
                     listsInputTask={listsInputTask}
                     setListsInputTask={setListsInputTask}
                     countTasks={countTasks}
@@ -137,7 +137,7 @@ const TaskCreationForm = ({ setIsCreate, setDatas }) => {
                 />
             </FormContext.Provider>
 
-            <Button type="submit" className="btn btn-primary me-3">
+            <Button type="submit" className="btn btn-success me-3">
                 Save
             </Button>
 
@@ -152,7 +152,7 @@ const TaskCreationForm = ({ setIsCreate, setDatas }) => {
     );
 };
 
-const FormInputTitle = () => {
+const InputTitle = () => {
     const { register, errors, handleResetErrorField } = useFormContext();
 
     return (
@@ -183,7 +183,7 @@ const FormInputTitle = () => {
     );
 };
 
-const FormInputsTasks = ({
+const InputsTasks = ({
     listsInputTask,
     setListsInputTask,
     countTasks,
@@ -208,7 +208,7 @@ const FormInputsTasks = ({
         <div className="mb-3">
             {listsInputTask.map((listInput) => (
                 <div key={listInput.id} className="mb-1">
-                    <TaskInput
+                    <InputTask
                         id={listInput.id}
                         handleDeleteTask={handleDeleteTask}
                     />
@@ -216,7 +216,7 @@ const FormInputsTasks = ({
             ))}
             <Button
                 type="button"
-                className="btn btn-success mt-3"
+                className="btn btn-primary mt-3"
                 onClick={handleAddTasks}
             >
                 Add a task <i className="bi bi-plus-lg"></i>
@@ -225,7 +225,7 @@ const FormInputsTasks = ({
     );
 };
 
-const TaskInput = ({ id, handleDeleteTask }) => {
+const InputTask = ({ id, handleDeleteTask }) => {
     const { register, errors, handleResetErrorField } = useFormContext();
 
     return (
@@ -267,67 +267,70 @@ const TaskInput = ({ id, handleDeleteTask }) => {
     );
 };
 
-const TasksTable = ({ task }) => {
+const ListsTasks = ({ task }) => {
     const [countChecked, setCountChecked] = useState(task.lists.length);
+    const [filter, setFilter] = useState(false);
 
-    /**
-     * Return the list of a stain
-     *
-     * @param {string} list
-     */
-    const listMap = (list) => {
+    const listMap = (list, index) => {
         const taskListId = useId();
 
         return (
-            <TaskBody
-                list={list}
+            <BodyListTask
                 key={taskListId}
-                keyId={taskListId}
+                index={index}
+                task={list}
                 setCountChecked={setCountChecked}
             />
         );
     };
 
     return (
-        <table className="table table-striped mb-5" key={task.id}>
-            <thead>
-                <TaskHeader countChecked={countChecked} task={task} />
-            </thead>
-            <tbody>{task.lists.map((list) => listMap(list))}</tbody>
-        </table>
+        <ul className="border border-ligth p-0 rounded-2 mx-3 mb-5">
+            <HeaderListTask task={task} countChecked={countChecked} />
+            <li className="list-group">
+                <ul className="p-0">
+                    {task.lists.map((list, index) => {
+                        listMap(list, index);
+                    })}
+                </ul>
+            </li>
+        </ul>
     );
 };
 
-const TaskHeader = ({ countChecked, task }) => {
+const HeaderListTask = ({ task, countChecked }) => {
     return (
-        <tr>
-            <th scope="col" className="d-flex flex-sm-row flex-column">
-                <div>{task.title}</div>
-                <div className="mx-3">
-                    {countChecked !== 0 ? (
-                        <>
-                            <span className="badge bg-success">
-                                {task.lists.length}
-                            </span>
-                            <span className="mx-2">/</span>
-                            <span
-                                className={`badge bg-${
-                                    countChecked === 0 ? "success" : "danger"
-                                }`}
-                            >
-                                {Math.abs(countChecked - task.lists.length)}
-                            </span>
-                        </>
-                    ) : (
-                        <span className="badge bg-success">Terminé</span>
-                    )}
-                </div>
-            </th>
-        </tr>
+        <li className="list-group d-flex flex-row justify-content-between p-3 rounded-0 border-bottom border-ligth">
+            <div className="d-flex align-items-center">
+                <div className="me-3">{task.title}</div>
+                {countChecked !== 0 ? (
+                    <div>
+                        <span className="badge bg-success">
+                            {task.lists.length}
+                        </span>
+                        <span className="mx-2">/</span>
+                        <span
+                            className={`badge bg-${
+                                countChecked === 0 ? "success" : "danger"
+                            }`}
+                        >
+                            {Math.abs(countChecked - task.lists.length)}
+                        </span>
+                    </div>
+                ) : (
+                    <span className="badge bg-success">Terminé</span>
+                )}
+            </div>
+            <div>
+                <Button className="btn btn-secondary btn-sm" type="button">
+                    <i className="bi bi-filter"></i>
+                </Button>
+            </div>
+        </li>
     );
 };
 
-const TaskBody = ({ list, keyId, setCountChecked }) => {
+const BodyListTask = ({ task, setCountChecked, index }) => {
     const [listChecked, setListChecked] = useState(false);
 
     const handlerListChecked = () => {
@@ -343,25 +346,27 @@ const TaskBody = ({ list, keyId, setCountChecked }) => {
     };
 
     return (
-        <tr className="border border-ligth">
-            <th className="fw-light">
-                <Input
-                    className="form-check-input me-3"
-                    type="checkbox"
-                    checked={listChecked}
-                    onChange={handlerListChecked}
-                    id={keyId}
-                />
-                <Label
-                    className={`form-check-label ${
-                        listChecked ? "text-decoration-line-through" : ""
-                    }`}
-                    htmlFor={keyId}
-                >
-                    {list}
-                </Label>
-            </th>
-        </tr>
+        <li
+            className={`list-group ${
+                index % 2 === 0 ? "bg-light" : ""
+            } d-flex flex-row px-5 py-3 rounded-2`}
+        >
+            <Input
+                className="form-check-input me-3"
+                type="checkbox"
+                checked={listChecked}
+                onChange={handlerListChecked}
+                id={useId()}
+            />
+            <Label
+                className={`form-check-label ${
+                    listChecked ? "text-decoration-line-through" : ""
+                }`}
+                htmlFor={useId()}
+            >
+                {task}
+            </Label>
+        </li>
     );
 };
 
