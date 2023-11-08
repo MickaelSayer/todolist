@@ -76,6 +76,11 @@ const useTasks = (initialFilters = []) => {
         setDatas(updateDatas);
     }
 
+    /** Adding the updatetaskchecked comment
+     * Update of the state of the task when she is checked/unclogged
+     * 
+     * @param {id} taskId The identifier of the List A Check/Decochée
+     */
     const updateTaskChecked = (taskId) => {
         setDatas((prevDatas) => prevDatas.map((data) => {
             const taskListFocus = data.lists.map((list) => {

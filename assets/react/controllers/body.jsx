@@ -434,5 +434,5 @@ const BodyListTask = ({ task, index }) => {
         </li>
     );
 };
-//Update of the state of the task when she is checked/unclogged
+
 export default Body;
