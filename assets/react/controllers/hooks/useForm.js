@@ -83,12 +83,14 @@ const useForm = () => {
      * @param {string} key The key to the field
      */
     const handleResetErrorField = (key) => {
-        setErrors((prevErrors) => {
-            const updatedErrors = { ...prevErrors };
-            delete updatedErrors[key];
+        if (Object.keys(errors).length !== 0) {
+            setErrors((prevErrors) => {
+                const updatedErrors = { ...prevErrors };
+                delete updatedErrors[key];
 
-            return updatedErrors;
-        });
+                return updatedErrors;
+            });
+        }
     }
 
     return { register, handleSubmit, errors, handleResetErrorField };
