@@ -51,18 +51,13 @@ const useTasks = (initialFilters = []) => {
         },
     ]
     const [filters, setFilters] = useState(initialFilters);
-
     const initialDataFiltered = _addFiltersNewDatas(filters, fields, intitialDatas);
     const [datas, setDatas] = useState(initialDataFiltered);
 
-    /**
-     * Changes data with new filters
-     * 
-     * @param {object} newOptionsFilter The new filter table
-     */
-    const updateFilter = (newOptionsFilter) => {
-        const updateDatas = _addFiltersNewDatas(newOptionsFilter, fields, datas);
-        setFilters(newOptionsFilter);
+
+    const updateFilter = (newFilter) => {
+        const updateDatas = _addFiltersNewDatas(newFilter, fields, datas);
+        setFilters({ ...filters, newFilter });
         setDatas(updateDatas);
     };
 
@@ -76,7 +71,7 @@ const useTasks = (initialFilters = []) => {
         setDatas(updateDatas);
     }
 
-    /** Adding the updatetaskchecked comment
+    /**
      * Update of the state of the task when she is checked/unclogged
      * 
      * @param {id} taskId The identifier of the List A Check/Decochée
@@ -100,15 +95,15 @@ const useTasks = (initialFilters = []) => {
         }));
     }
 
-    return { datas, setDatas, filters, updateFilter, createTask, updateTaskChecked }
+    return { datas, setDatas, filters, updateFilter, createTask, updateTaskChecked, setFilters }
 }
 
 /**
  * Filter datas
  * 
- * @param {object} filters 
- * @param {object} fields 
- * @param {object} datas 
+ * @param {object} filters The task filter
+ * @param {object} fields The fields of tasks
+ * @param {object} datas Tasks data
  * 
  * @returns Filtered datas
  */
@@ -116,11 +111,11 @@ const _addFiltersNewDatas = (filters, fields, datas) => {
     let newDatas = [...datas];
     if (filters.length !== 0) {
         fields.forEach((field) => {
-            if (filters[field] !== undefined && filters[field].action === 'sort') {
-                if (filters[field].type === "desc") {
-                    newDatas = newDatas.sort((a, b) => b[field] - a[field]);
+            if (filters[field] !== undefined && filters[field].type === 'sort') {
+                if (filters[field].defaultFilter === "desc") {
+                    newDatas.sort((a, b) => b[field] - a[field]);
                 } else {
-                    newDatas = newDatas.sort((a, b) => a[field] - b[field]);
+                    newDatas.sort((a, b) => a[field] - b[field]);
                 }
             }
         });

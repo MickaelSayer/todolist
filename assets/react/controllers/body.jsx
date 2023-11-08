@@ -23,54 +23,48 @@ function Body() {
 const TodoTable = () => {
     const initialFilters = {
         created_at: {
-            action: "sort",
-            type: "desc",
-            reverseType: "asc",
+            type: "sort",
+            defaultFilter: "desc",
+        },
+        lists: {
+            type: "filter",
+            defaultFilter: "allChecked",
         },
     };
 
-    const { datas, filters, updateFilter, createTask, updateTaskChecked } = useTasks(initialFilters);
+    const {
+        datas,
+        filters,
+        updateFilter,
+        createTask,
+        updateTaskChecked,
+        setFilters,
+    } = useTasks(initialFilters);
 
     return (
         <>
-            <datasContext.Provider value={{ datas, createTask, filters, updateFilter, updateTaskChecked }}>
+            <datasContext.Provider
+                value={{
+                    datas,
+                    createTask,
+                    filters,
+                    updateFilter,
+                    updateTaskChecked,
+                    setFilters,
+                }}
+            >
                 <TaskCreationContainer />
                 <FormFilter />
                 {datas.map((task) => (
-                <ListsTasks key={task.id} task={task} />
-            ))}
+                    <ListsTasks key={task.id} task={task} />
+                ))}
             </datasContext.Provider>
         </>
     );
 };
 
 const FormFilter = () => {
-    const { filters, updateFilter } = useContext(datasContext);
     const [openFilter, setOpenFilter] = useState(false);
-    const [valueFilterDate, setValueFilterDate] = useState(
-        filters.created_at.type
-    );
-
-    const handleChangeFilterDate = () => {
-        let defaultFilterType = filters.created_at.type;
-        let defaultFilterReverseType = filters.created_at.reverseType;
-
-        const newFilterType =
-            valueFilterDate === defaultFilterType
-                ? defaultFilterReverseType
-                : defaultFilterType;
-
-        setValueFilterDate(newFilterType);
-        const newOptionsFilter = {
-            created_at: {
-                action: "sort",
-                type: newFilterType,
-                reverseType: newFilterType === "desc" ? "asc" : "desc",
-            },
-        };
-
-        updateFilter(newOptionsFilter);
-    };
 
     return (
         <>
@@ -99,32 +93,115 @@ const FormFilter = () => {
             </Button>
             {openFilter && (
                 <div className="d-flex justify-content-evenly align-items-center ms-3 mb-5 bg-light p-3 rounded-bottom">
-                    <div className="form-check form-switch">
-                        <span className="fw-medium">By date :</span>
-                        <Select
-                            className="form-select form-select-sm mb-3"
-                            aria-label="Select the filter for the order of the date"
-                            onChange={handleChangeFilterDate}
-                            value={valueFilterDate}
-                            options={[
-                                {
-                                    value: "desc",
-                                    defaultValue: valueFilterDate === "desc",
-                                    name: "Descending",
-                                    key: "descending",
-                                },
-                                {
-                                    value: "asc",
-                                    defaultValue: valueFilterDate === "asc",
-                                    name: "Ascending",
-                                    key: "ascending",
-                                },
-                            ]}
-                        />
-                    </div>
+                    <SelectFilterDate />
+                    <SelectFilterChecked />
                 </div>
             )}
         </>
+    );
+};
+
+const SelectFilterChecked = () => {
+    const { filters, setFilters } = useContext(datasContext);
+    const [valueFilterChecked, setValueFilterChecked] = useState(
+        filters.lists.defaultFilter
+    );
+
+    const handleChangeFilterChecked = (e) => {
+        const selectName = e.target.name;
+        const optionValue = e.target.value;
+
+        const newFilter = {
+            [selectName]: {
+                type: filters[selectName].type.toString(),
+                defaultFilter: [optionValue].toString(),
+            },
+        };
+
+        setFilters({ ...filters, ...newFilter });
+        setValueFilterChecked(optionValue);
+    };
+
+    return (
+        <div className="form-check form-switch">
+            <span className="fw-medium">By the status of the task :</span>
+            <Select
+                className="form-select form-select-sm mb-3"
+                aria-label="Select the filter for the order of the date"
+                onChange={handleChangeFilterChecked}
+                value={valueFilterChecked}
+                name="lists"
+                options={[
+                    {
+                        value: "allChecked",
+                        defaultValue: valueFilterChecked === "allChecked",
+                        name: "All tasks",
+                        key: "allChecked",
+                    },
+                    {
+                        value: "checked",
+                        defaultValue: valueFilterChecked === "checked",
+                        name: "tasks checked",
+                        key: "checked",
+                    },
+                    {
+                        value: "noChecked",
+                        defaultValue: valueFilterChecked === "noChecked",
+                        name: "tasks unchecked",
+                        key: "noChecked",
+                    },
+                ]}
+            />
+        </div>
+    );
+};
+
+const SelectFilterDate = () => {
+    const { filters, updateFilter } = useContext(datasContext);
+    const [valueFilterDate, setValueFilterDate] = useState(
+        filters.created_at.defaultFilter
+    );
+
+    const handleChangeFilterDate = (e) => {
+        const selectName = e.target.name;
+        const optionValue = e.target.value;
+
+        const newFilter = {
+            [selectName]: {
+                type: filters[selectName].type.toString(),
+                defaultFilter: [optionValue].toString(),
+            },
+        };
+
+        setValueFilterDate(optionValue);
+        updateFilter(newFilter);
+    };
+
+    return (
+        <div className="form-check form-switch">
+            <span className="fw-medium">By date :</span>
+            <Select
+                className="form-select form-select-sm mb-3"
+                aria-label="Select the filter for the order of the date"
+                onChange={handleChangeFilterDate}
+                value={valueFilterDate}
+                name="created_at"
+                options={[
+                    {
+                        value: "desc",
+                        defaultValue: valueFilterDate === "desc",
+                        name: "Descending",
+                        key: "descending",
+                    },
+                    {
+                        value: "asc",
+                        defaultValue: valueFilterDate === "asc",
+                        name: "Ascending",
+                        key: "ascending",
+                    },
+                ]}
+            />
+        </div>
     );
 };
 
@@ -358,14 +435,32 @@ const InputTask = ({ id, handleDeleteTask }) => {
 };
 
 const ListsTasks = ({ task }) => {
+    const { filters } = useContext(datasContext);
+
+    const shouldRenderList = (list) => {
+        return (
+            (filters.lists.defaultFilter === "noChecked" && !list.checked) ||
+            (filters.lists.defaultFilter === "checked" && list.checked) ||
+            filters.lists.defaultFilter === "allChecked"
+        );
+    };
+
     return (
         <ul className="border border-ligth p-0 rounded-2 mx-3 mb-5">
             <HeaderListTask task={task} />
             <li className="list-group">
                 <ul className="p-0">
-                    {task.lists.map((list, index) => (
-                        <BodyListTask key={list.id} index={index} task={list} />
-                    ))}
+                    {task.lists.map((list, index) => {
+                        return (
+                            shouldRenderList(list) && (
+                                <BodyListTask
+                                    key={list.id}
+                                    index={index}
+                                    task={list}
+                                />
+                            )
+                        );
+                    })}
                 </ul>
             </li>
         </ul>
@@ -407,8 +502,8 @@ const BodyListTask = ({ task, index }) => {
     const { updateTaskChecked } = useContext(datasContext);
 
     const handleUpdateTaskChecked = () => {
-        updateTaskChecked(task.id)
-    }
+        updateTaskChecked(task.id);
+    };
 
     return (
         <li
