@@ -29,18 +29,17 @@ const TodoTable = () => {
         },
     };
 
-    const { datas, filters, updateFilter, createTask } = useTasks(initialFilters);
+    const { datas, filters, updateFilter, createTask, updateTaskChecked } = useTasks(initialFilters);
 
     return (
         <>
-            <datasContext.Provider value={{ datas, createTask, filters, updateFilter }}>
+            <datasContext.Provider value={{ datas, createTask, filters, updateFilter, updateTaskChecked }}>
                 <TaskCreationContainer />
                 <FormFilter />
-            </datasContext.Provider>
-
-            {datas.map((task) => (
+                {datas.map((task) => (
                 <ListsTasks key={task.id} task={task} />
             ))}
+            </datasContext.Provider>
         </>
     );
 };
@@ -374,24 +373,8 @@ const ListsTasks = ({ task }) => {
 };
 
 const HeaderListTask = ({ task }) => {
-    /**
-     * Start[checkedTask]
-     * Check that all tasks are finished
-     */
-    let countTaskChecked = 0;
-    let filterTaskDisplay = false;
-    task.lists.map((list) => {
-        if (list.checked) {
-            countTaskChecked++;
-        }
-    });
-
-    if (countTaskChecked === task.lists.length) {
-        filterTaskDisplay = true;
-    }
-    /**
-     * End[checkedTask]
-     */
+    const countTaskChecked = task.lists.filter((list) => list.checked).length;
+    const filterTaskDisplay = countTaskChecked === task.lists.length;
 
     const options = { year: "numeric", month: "long", day: "numeric" };
     const formattedDate = task.created_at.toLocaleDateString("fr-FR", options);
@@ -421,6 +404,12 @@ const HeaderListTask = ({ task }) => {
 };
 
 const BodyListTask = ({ task, index }) => {
+    const { updateTaskChecked } = useContext(datasContext);
+
+    const handleUpdateTaskChecked = () => {
+        updateTaskChecked(task.id)
+    }
+
     return (
         <li
             className={`list-group ${
@@ -431,7 +420,7 @@ const BodyListTask = ({ task, index }) => {
                 className="form-check-input me-3"
                 type="checkbox"
                 checked={task.checked}
-                onChange={() => null}
+                onChange={handleUpdateTaskChecked}
                 id={task.id}
             />
             <Label
@@ -445,5 +434,5 @@ const BodyListTask = ({ task, index }) => {
         </li>
     );
 };
-
+//Update of the state of the task when she is checked/unclogged
 export default Body;

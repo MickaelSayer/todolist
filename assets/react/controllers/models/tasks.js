@@ -54,7 +54,7 @@ const useTasks = (initialFilters = []) => {
 
     const initialDataFiltered = _addFiltersNewDatas(filters, fields, intitialDatas);
     const [datas, setDatas] = useState(initialDataFiltered);
-    
+
     /**
      * Changes data with new filters
      * 
@@ -76,7 +76,26 @@ const useTasks = (initialFilters = []) => {
         setDatas(updateDatas);
     }
 
-    return { datas, setDatas, filters, updateFilter, createTask }
+    const updateTaskChecked = (taskId) => {
+        setDatas((prevDatas) => prevDatas.map((data) => {
+            const taskListFocus = data.lists.map((list) => {
+                if (list.id === taskId) {
+                    return {
+                        ...list,
+                        checked: !list.checked
+                    };
+                }
+                return list;
+            });
+
+            return {
+                ...data,
+                lists: taskListFocus
+            };
+        }));
+    }
+
+    return { datas, setDatas, filters, updateFilter, createTask, updateTaskChecked }
 }
 
 /**
