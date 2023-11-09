@@ -1,8 +1,25 @@
 import { useState } from "react";
 
-const useTasks = (initialFilters = []) => {
-    const fields = ['id', 'title', 'lists', 'created_at'];
-    let intitialDatas = [
+const useTasks = () => {
+    const tasksFields = {
+        id: {},
+        title: {},
+        lists: {
+            filter: {
+                name: 'lists',
+                type: "filter",
+                defaultFilter: "allChecked",
+            }
+        },
+        created_at: {
+            filter: {
+                name: 'created_at',
+                type: "sort",
+                defaultFilter: "desc",
+            }
+        }
+    };
+    const intitialDatas = [
         {
             id: 1,
             title: "List of races",
@@ -50,18 +67,17 @@ const useTasks = (initialFilters = []) => {
             created_at: new Date(2023, 9, 29),
         },
     ]
-    const [filters, setFilters] = useState(initialFilters);
-    const initialDataFiltered = _addFiltersNewDatas(filters, fields, intitialDatas);
-    const [datas, setDatas] = useState(initialDataFiltered);
+    const [fields, setFields] = useState(tasksFields);
+    intitialDatas.sort((a, b) => b.created_at - a.created_at)
+    const [datas, setDatas] = useState(intitialDatas);
 
     /**
      * Creation of a task respecting the filters
      * 
      * @param {object} datasCreate Data for the new task
      */
-    const createTask = (datasCreate) => {
-        const updateDatas = _addFiltersNewDatas(filters, fields, [...datas, datasCreate])
-        setDatas(updateDatas);
+    const createTask = (currentFields, datasCreate) => {
+        __backupFilteredDatas(currentFields, [...datas, datasCreate])
     }
 
     /**
@@ -88,33 +104,61 @@ const useTasks = (initialFilters = []) => {
         }));
     }
 
-    return { datas, setDatas, filters, createTask, updateTaskChecked, setFilters }
-}
+    /**
+     * Manage the change of filter
+     * 
+     * @param {object} eventFilter 
+     */
+    const handleChangeFilter = (eventFilter) => {
+        const selectName = eventFilter.target.name;
+        const optionValue = eventFilter.target.value;
 
-/**
- * Filter datas
- * 
- * @param {object} filters The task filter
- * @param {object} fields The fields of tasks
- * @param {object} datas Tasks data
- * 
- * @returns Filtered datas
- */
-const _addFiltersNewDatas = (filters, fields, datas) => {
-    let newDatas = [...datas];
-    if (filters.length !== 0) {
-        fields.forEach((field) => {
-            if (filters[field] !== undefined && filters[field].type === 'sort') {
-                if (filters[field].defaultFilter === "desc") {
-                    newDatas.sort((a, b) => b[field] - a[field]);
-                } else {
-                    newDatas.sort((a, b) => a[field] - b[field]);
+        const newFilter = {
+            [selectName]: {
+                filter: {
+                    name: selectName,
+                    type: fields[selectName].filter.type,
+                    defaultFilter: optionValue,
+                }
+            },
+        };
+
+        const newFilters = { ...fields, ...newFilter };
+        setFields(newFilters);
+
+        __backupFilteredDatas(newFilters)
+    };
+
+    /**
+     * Saves filtered data
+     * 
+     * @param {object} newFilters 
+     */
+    const __backupFilteredDatas = (newFilters, currentDatas = []) => {
+        let datasFiltered = currentDatas.length === 0 ? [...datas] : currentDatas;
+
+        if (newFilters.length !== 0) {
+            for (const [key, field] of Object.entries(newFilters)) {
+                if (Object.keys(field).length !== 0) {
+                    if (field.filter.type === 'sort' && field.filter.defaultFilter === 'desc') {
+                        datasFiltered.sort((a, b) => b[field.filter.name] - a[field.filter.name])
+                    } else {
+                        datasFiltered.sort((a, b) => a[field.filter.name] - b[field.filter.name])
+                    }
                 }
             }
-        });
+        }
+
+        setDatas(datasFiltered)
     }
 
-    return newDatas;
+    return {
+        datas,
+        createTask,
+        updateTaskChecked,
+        fields,
+        handleChangeFilter
+    }
 }
 
 export default useTasks

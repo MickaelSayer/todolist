@@ -21,19 +21,8 @@ function Body() {
 }
 
 const TodoTable = () => {
-    const initialFilters = {
-        created_at: {
-            type: "sort",
-            defaultFilter: "desc",
-        },
-        lists: {
-            type: "filter",
-            defaultFilter: "allChecked",
-        },
-    };
-
-    const { datas, filters, createTask, updateTaskChecked, setFilters } =
-        useTasks(initialFilters);
+    const { datas, createTask, updateTaskChecked, fields, handleChangeFilter } =
+        useTasks();
 
     return (
         <>
@@ -41,9 +30,9 @@ const TodoTable = () => {
                 value={{
                     datas,
                     createTask,
-                    filters,
                     updateTaskChecked,
-                    setFilters,
+                    fields,
+                    handleChangeFilter,
                 }}
             >
                 <TaskCreationContainer />
@@ -63,7 +52,7 @@ const FormFilter = () => {
         <>
             <Button
                 className={`btn btn-light ms-3 rounded-0 ${
-                    openFilter ? "mb-0 rounded-top" : "mb-3 rounded-2"
+                    openFilter ? "mb-0 rounded-top" : "mb-5 rounded-2"
                 }`}
                 type="button"
                 onClick={() => setOpenFilter(!openFilter)}
@@ -95,25 +84,8 @@ const FormFilter = () => {
 };
 
 const SelectFilterChecked = () => {
-    const { filters, setFilters } = useContext(datasContext);
-    const [valueFilterChecked, setValueFilterChecked] = useState(
-        filters.lists.defaultFilter
-    );
-
-    const handleChangeFilterChecked = (e) => {
-        const selectName = e.target.name;
-        const optionValue = e.target.value;
-
-        const newFilter = {
-            [selectName]: {
-                type: filters[selectName].type.toString(),
-                defaultFilter: [optionValue].toString(),
-            },
-        };
-
-        setFilters({ ...filters, ...newFilter });
-        setValueFilterChecked(optionValue);
-    };
+    const { fields, handleChangeFilter } = useContext(datasContext);
+    const valueFilter = fields.lists.filter.defaultFilter;
 
     return (
         <div className="form-check form-switch">
@@ -121,25 +93,26 @@ const SelectFilterChecked = () => {
             <Select
                 className="form-select form-select-sm mb-3"
                 aria-label="Select the filter for the order of the date"
-                onChange={handleChangeFilterChecked}
-                value={valueFilterChecked}
-                name="lists"
+                onChange={handleChangeFilter}
+                value={valueFilter}
+                name={fields.lists.filter.name}
                 options={[
                     {
                         value: "allChecked",
-                        defaultValue: valueFilterChecked === "allChecked",
+                        defaultValue: valueFilter === "allChecked",
                         name: "All tasks",
                         key: "allChecked",
                     },
                     {
                         value: "checked",
-                        defaultValue: valueFilterChecked === "checked",
+                        defaultValue: valueFilter === "checked",
                         name: "tasks checked",
                         key: "checked",
                     },
                     {
                         value: "noChecked",
-                        defaultValue: valueFilterChecked === "noChecked",
+                        defaultValue: valueFilter === "noChecked",
+                        value: "noChecked",
                         name: "tasks unchecked",
                         key: "noChecked",
                     },
@@ -150,25 +123,8 @@ const SelectFilterChecked = () => {
 };
 
 const SelectFilterDate = () => {
-    const { filters, setFilters } = useContext(datasContext);
-    const [valueFilterDate, setValueFilterDate] = useState(
-        filters.created_at.defaultFilter
-    );
-
-    const handleChangeFilterDate = (e) => {
-        const selectName = e.target.name;
-        const optionValue = e.target.value;
-
-        const newFilter = {
-            [selectName]: {
-                type: filters[selectName].type.toString(),
-                defaultFilter: [optionValue].toString(),
-            },
-        };
-
-        setFilters({ ...filters, ...newFilter });
-        setValueFilterDate(optionValue);
-    };
+    const { fields, handleChangeFilter } = useContext(datasContext);
+    const valueFilter = fields.created_at.filter.defaultFilter;
 
     return (
         <div className="form-check form-switch">
@@ -176,19 +132,19 @@ const SelectFilterDate = () => {
             <Select
                 className="form-select form-select-sm mb-3"
                 aria-label="Select the filter for the order of the date"
-                onChange={handleChangeFilterDate}
-                value={valueFilterDate}
-                name="created_at"
+                onChange={handleChangeFilter}
+                value={valueFilter}
+                name={fields.created_at.filter.name}
                 options={[
                     {
                         value: "desc",
-                        defaultValue: valueFilterDate === "desc",
+                        defaultValue: valueFilter === "desc",
                         name: "Descending",
                         key: "descending",
                     },
                     {
                         value: "asc",
-                        defaultValue: valueFilterDate === "asc",
+                        defaultValue: valueFilter === "asc",
                         name: "Ascending",
                         key: "ascending",
                     },
@@ -228,7 +184,7 @@ const TaskCreationContainer = () => {
 
 const TaskCreationForm = ({ setIsCreate }) => {
     const { register, handleSubmit, errors, handleResetErrorField } = useForm();
-    const { datas, createTask } = useContext(datasContext);
+    const { datas, createTask, fields } = useContext(datasContext);
     const [countTasks, setCountTasks] = useState(1);
     const [listsInputTask, setListsInputTask] = useState([
         { id: `tasks_${countTasks}` },
@@ -251,7 +207,7 @@ const TaskCreationForm = ({ setIsCreate }) => {
             incrementId++;
         });
 
-        createTask({
+        createTask(fields, {
             id: datas.length + 1,
             title: dataTitle,
             lists: listsInputSave,
@@ -428,14 +384,33 @@ const InputTask = ({ id, handleDeleteTask }) => {
 };
 
 const ListsTasks = ({ task }) => {
+    const { fields } = useContext(datasContext);
+
+    const shouldRenderList = (list) => {
+        return (
+            (fields.lists.filter.defaultFilter === "noChecked" &&
+                !list.checked) ||
+            (fields.lists.filter.defaultFilter === "checked" && list.checked) ||
+            fields.lists.filter.defaultFilter === "allChecked"
+        );
+    };
+
     return (
         <ul className="border border-ligth p-0 rounded-2 mx-3 mb-5">
             <HeaderListTask task={task} />
             <li className="list-group">
                 <ul className="p-0">
-                    {task.lists.map((list, index) => (
-                        <BodyListTask key={list.id} index={index} task={list} />
-                    ))}
+                    {task.lists.map((list, index) => {
+                        return (
+                            shouldRenderList(list) && (
+                                <BodyListTask
+                                    key={list.id}
+                                    index={index}
+                                    task={list}
+                                />
+                            )
+                        );
+                    })}
                 </ul>
             </li>
         </ul>
@@ -446,28 +421,40 @@ const HeaderListTask = ({ task }) => {
     const countTaskChecked = task.lists.filter((list) => list.checked).length;
     const filterTaskDisplay = countTaskChecked === task.lists.length;
 
+    const progressValue = Math.round(
+        (100 / task.lists.length) * countTaskChecked
+    );
+    const colorBarProgress =
+        progressValue === 0
+            ? "bg-secondary"
+            : progressValue > 0 && progressValue < 35
+            ? "bg-danger"
+            : progressValue > 35 && progressValue < 70
+            ? "bg-warning"
+            : progressValue > 70 && "bg-success";
+
     const options = { year: "numeric", month: "long", day: "numeric" };
     const formattedDate = task.created_at.toLocaleDateString("fr-FR", options);
 
     return (
         <li
-            className={`list-group d-flex flex-row justify-content-between align-items-center p-3 rounded-0 border-ligth
+            className={`list-group d-flex flex-row justify-content-between align-items-center p-3 rounded-0 border-ligth position-relative
             ${!filterTaskDisplay ? "border-bottom" : ""}`}
         >
+            <TaskProgressBar
+                progressValue={progressValue}
+                colorBarProgress={colorBarProgress}
+            />
+
             <div className="d-flex align-items-center">
                 <div className="me-3 d-flex flex-column justify-content-center">
                     <span className="fw-semibold">{task.title}</span>
                     <span style={{ fontSize: "0.6em" }}>{formattedDate}</span>
                 </div>
-                {filterTaskDisplay ? (
-                    <span className="badge text-bg-success py-2 px-3">
-                        Terminé <i className="bi bi-check-lg"></i>
-                    </span>
-                ) : (
-                    <span className="badge text-bg-light py-2 px-3">
-                        En cours <i className="bi bi-hourglass-split"></i>
-                    </span>
-                )}
+                <TaskProgressBadge
+                    filterTaskDisplay={filterTaskDisplay}
+                    colorBarProgress={colorBarProgress}
+                />
             </div>
         </li>
     );
@@ -503,6 +490,49 @@ const BodyListTask = ({ task, index }) => {
             </Label>
         </li>
     );
+};
+
+const TaskProgressBar = ({ progressValue, colorBarProgress }) => {
+    return (
+        <div
+            className="progress position-absolute top-0 start-50 translate-middle w-100"
+            role="progressbar"
+            aria-label="Barre de progression de la tâche"
+            aria-valuenow={progressValue}
+            aria-valuemin="0"
+            aria-valuemax="100"
+        >
+            <div
+                className={`position-absolute top-50 start-50 translate-middle fw-bold ${
+                    progressValue > 50 && "text-white"
+                }`}
+            >
+                {progressValue}%
+            </div>
+            <div
+                className={`progress-bar ${colorBarProgress}`}
+                style={{ width: progressValue + "%" }}
+            ></div>
+        </div>
+    );
+};
+
+const TaskProgressBadge = ({ filterTaskDisplay, colorBarProgress }) => {
+    let content = null;
+
+    filterTaskDisplay
+        ? (content = (
+              <span className={`badge text-${colorBarProgress} py-2 px-3`}>
+                  Terminé <i className="bi bi-check-lg"></i>
+              </span>
+          ))
+        : (content = (
+              <span className={`badge text-${colorBarProgress} py-2 px-3`}>
+                  En cours <i className="bi bi-hourglass-split"></i>
+              </span>
+          ));
+
+    return content;
 };
 
 export default Body;
