@@ -32,14 +32,8 @@ const TodoTable = () => {
         },
     };
 
-    const {
-        datas,
-        filters,
-        updateFilter,
-        createTask,
-        updateTaskChecked,
-        setFilters,
-    } = useTasks(initialFilters);
+    const { datas, filters, createTask, updateTaskChecked, setFilters } =
+        useTasks(initialFilters);
 
     return (
         <>
@@ -48,7 +42,6 @@ const TodoTable = () => {
                     datas,
                     createTask,
                     filters,
-                    updateFilter,
                     updateTaskChecked,
                     setFilters,
                 }}
@@ -157,7 +150,7 @@ const SelectFilterChecked = () => {
 };
 
 const SelectFilterDate = () => {
-    const { filters, updateFilter } = useContext(datasContext);
+    const { filters, setFilters } = useContext(datasContext);
     const [valueFilterDate, setValueFilterDate] = useState(
         filters.created_at.defaultFilter
     );
@@ -173,8 +166,8 @@ const SelectFilterDate = () => {
             },
         };
 
+        setFilters({ ...filters, ...newFilter });
         setValueFilterDate(optionValue);
-        updateFilter(newFilter);
     };
 
     return (
@@ -435,32 +428,14 @@ const InputTask = ({ id, handleDeleteTask }) => {
 };
 
 const ListsTasks = ({ task }) => {
-    const { filters } = useContext(datasContext);
-
-    const shouldRenderList = (list) => {
-        return (
-            (filters.lists.defaultFilter === "noChecked" && !list.checked) ||
-            (filters.lists.defaultFilter === "checked" && list.checked) ||
-            filters.lists.defaultFilter === "allChecked"
-        );
-    };
-
     return (
         <ul className="border border-ligth p-0 rounded-2 mx-3 mb-5">
             <HeaderListTask task={task} />
             <li className="list-group">
                 <ul className="p-0">
-                    {task.lists.map((list, index) => {
-                        return (
-                            shouldRenderList(list) && (
-                                <BodyListTask
-                                    key={list.id}
-                                    index={index}
-                                    task={list}
-                                />
-                            )
-                        );
-                    })}
+                    {task.lists.map((list, index) => (
+                        <BodyListTask key={list.id} index={index} task={list} />
+                    ))}
                 </ul>
             </li>
         </ul>

@@ -54,13 +54,6 @@ const useTasks = (initialFilters = []) => {
     const initialDataFiltered = _addFiltersNewDatas(filters, fields, intitialDatas);
     const [datas, setDatas] = useState(initialDataFiltered);
 
-
-    const updateFilter = (newFilter) => {
-        const updateDatas = _addFiltersNewDatas(newFilter, fields, datas);
-        setFilters({ ...filters, newFilter });
-        setDatas(updateDatas);
-    };
-
     /**
      * Creation of a task respecting the filters
      * 
@@ -95,7 +88,7 @@ const useTasks = (initialFilters = []) => {
         }));
     }
 
-    return { datas, setDatas, filters, updateFilter, createTask, updateTaskChecked, setFilters }
+    return { datas, setDatas, filters, createTask, updateTaskChecked, setFilters }
 }
 
 /**
