@@ -1,46 +1,28 @@
 import { useState } from "react";
 
 const useTasks = () => {
-    const tasksFields = {
-        id: {},
-        title: {},
-        lists: {
-            filter: {
-                name: 'lists',
-                type: "filter",
-                defaultFilter: "allChecked",
-            }
-        },
-        created_at: {
-            filter: {
-                name: 'created_at',
-                type: "sort",
-                defaultFilter: "desc",
-            }
-        }
-    };
-    const intitialDatas = [
+    const intitialLists = [
         {
             id: 1,
             title: "List of races",
-            lists: [{ id: 1, name: "Buy milk", checked: true }],
+            tasks: [{ id: 1, name: "Buy milk", checked: true }],
             created_at: new Date(2023, 9, 5),
         },
         {
             id: 2,
             title: "Development Project",
-            lists: [
+            tasks: [
                 { id: 2, name: "Implement X functionality", checked: true },
                 { id: 3, name: "Write documentation", checked: true },
-                { id: 4, name: "Perform tests", checked: false },
+                { id: 4, name: "To exercise", checked: false },
             ],
             created_at: new Date(2023, 9, 11),
         },
         {
             id: 3,
             title: "morning routine",
-            lists: [
-                { id: 5, name: "To exercise", checked: true },
+            tasks: [
+                { id: 5, name: "To exerc", checked: true },
                 { id: 6, name: "Take a shower", checked: false },
                 { id: 7, name: "Have breakfast", checked: false },
                 { id: 8, name: "To buy vegetables", checked: false },
@@ -50,7 +32,7 @@ const useTasks = () => {
         {
             id: 4,
             title: "spring cleaning",
-            lists: [
+            tasks: [
                 { id: 9, name: "Wash the windows", checked: false },
                 { id: 10, name: "To vacuum", checked: false },
                 { id: 11, name: "Organize the closet", checked: false },
@@ -60,104 +42,99 @@ const useTasks = () => {
         {
             id: 5,
             title: "Travel planning",
-            lists: [
+            tasks: [
                 { id: 12, name: "Book plane tickets", checked: false },
                 { id: 13, name: "book the hotel", checked: false },
             ],
             created_at: new Date(2023, 9, 29),
         },
     ]
-    const [fields, setFields] = useState(tasksFields);
-    intitialDatas.sort((a, b) => b.created_at - a.created_at)
-    const [datas, setDatas] = useState(intitialDatas);
+    const [lists, setLists] = useState(intitialLists);
 
     /**
-     * Creation of a task respecting the filters
+     * Task recording
      * 
-     * @param {object} datasCreate Data for the new task
+     * @param {object} formData 
+     * @param {object} listsInputTask 
+     * @param {boolean} setIsCreate 
      */
-    const createTask = (currentFields, datasCreate) => {
-        __backupFilteredDatas(currentFields, [...datas, datasCreate])
-    }
+    const handleSaveLists = (formData, listsInputTask, setIsCreate) => {
+        const dataTitle = formData.get("title");
 
-    /**
-     * Update of the state of the task when she is checked/unclogged
-     * 
-     * @param {id} taskId The identifier of the List A Check/Decochée
-     */
-    const updateTaskChecked = (taskId) => {
-        setDatas((prevDatas) => prevDatas.map((data) => {
-            const taskListFocus = data.lists.map((list) => {
-                if (list.id === taskId) {
-                    return {
-                        ...list,
-                        checked: !list.checked
-                    };
-                }
-                return list;
-            });
+        const listsInputSave = createListsForm(formData, listsInputTask);
 
-            return {
-                ...data,
-                lists: taskListFocus
-            };
-        }));
-    }
-
-    /**
-     * Manage the change of filter
-     * 
-     * @param {object} eventFilter 
-     */
-    const handleChangeFilter = (eventFilter) => {
-        const selectName = eventFilter.target.name;
-        const optionValue = eventFilter.target.value;
-
-        const newFilter = {
-            [selectName]: {
-                filter: {
-                    name: selectName,
-                    type: fields[selectName].filter.type,
-                    defaultFilter: optionValue,
-                }
+        setLists([
+            ...lists,
+            {
+                id: lists.length + 1,
+                title: dataTitle,
+                tasks: listsInputSave,
+                created_at: new Date(),
             },
-        };
-
-        const newFilters = { ...fields, ...newFilter };
-        setFields(newFilters);
-
-        __backupFilteredDatas(newFilters)
+        ]);
+        setIsCreate((prevIsCreate) => !prevIsCreate);
     };
 
     /**
-     * Saves filtered data
+     * Creation of the task list
      * 
-     * @param {object} newFilters 
+     * @param {object} formData 
+     * @param {object} listsInputTask 
+     * 
+     * @returns {object} The task list
      */
-    const __backupFilteredDatas = (newFilters, currentDatas = []) => {
-        let datasFiltered = currentDatas.length === 0 ? [...datas] : currentDatas;
+    const createListsForm = (formData, listsInputTask) => {
+        const lastDatas = lists[lists.length - 1];
+        const lastDatasListId = lastDatas.tasks[lastDatas.tasks.length - 1].id;
 
-        if (newFilters.length !== 0) {
-            for (const [key, field] of Object.entries(newFilters)) {
-                if (Object.keys(field).length !== 0) {
-                    if (field.filter.type === 'sort' && field.filter.defaultFilter === 'desc') {
-                        datasFiltered.sort((a, b) => b[field.filter.name] - a[field.filter.name])
-                    } else {
-                        datasFiltered.sort((a, b) => a[field.filter.name] - b[field.filter.name])
+        const listsInputSave = [];
+        let incrementId = 1;
+        listsInputTask.map((list) => {
+            listsInputSave.push({
+                id: lastDatasListId + incrementId,
+                name: formData.get(list.id),
+                checked: false,
+            });
+
+            incrementId++;
+        });
+
+        return listsInputSave;
+    };
+
+    /**
+     * Changes the checked state of a task
+     */
+    const handleUpdateTaskChecked = (e) => {
+        const TASK_ID = Number(e.target.id);
+        const IS_TASK_CHECKED = e.target.checked;
+    
+        setLists((prevLists) =>
+            prevLists.map((list) => {
+                const taskListFocus = list.tasks.map((TaskList) => {
+                    if (TaskList.id === TASK_ID) {
+                        return {
+                            ...TaskList,
+                            checked: IS_TASK_CHECKED,
+                        };
                     }
-                }
-            }
-        }
+                    return TaskList;
+                });
+ 
+                return {
+                    ...list,
+                    tasks: taskListFocus,
+                };
+            })
+        );
+    };
 
-        setDatas(datasFiltered)
-    }
 
     return {
-        datas,
-        createTask,
-        updateTaskChecked,
-        fields,
-        handleChangeFilter
+        lists,
+        setLists,
+        handleSaveLists,
+        handleUpdateTaskChecked
     }
 }
 

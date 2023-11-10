@@ -4,11 +4,13 @@ import Input from "./components/forms/input";
 import Label from "./components/forms/label";
 import useForm from "./hooks/useForm";
 import { FormContext, useFormContext } from "./context/useFormContext";
-import Select from "./components/forms/select";
 import useTasks from "./models/tasks";
 
 const datasContext = createContext(null);
 
+/**
+ *The section of the to do list
+ */
 function Body() {
     return (
         <StrictMode>
@@ -20,201 +22,80 @@ function Body() {
     );
 }
 
+/**
+ * The contents of the to do list
+ */
 const TodoTable = () => {
-    const { datas, createTask, updateTaskChecked, fields, handleChangeFilter } =
+    const { lists, setLists, handleSaveLists, handleUpdateTaskChecked } =
         useTasks();
 
     return (
         <>
             <datasContext.Provider
                 value={{
-                    datas,
-                    createTask,
-                    updateTaskChecked,
-                    fields,
-                    handleChangeFilter,
+                    lists,
+                    setLists,
+                    handleSaveLists,
+                    handleUpdateTaskChecked,
                 }}
             >
-                <TaskCreationContainer />
-                <FormFilter />
-                {datas.map((task) => (
-                    <ListsTasks key={task.id} task={task} />
+                <DisplayTaskCreationForm />
+                {lists.map((list) => (
+                    <ListsTasks key={list.id} list={list} />
                 ))}
             </datasContext.Provider>
         </>
     );
 };
 
-const FormFilter = () => {
-    const [openFilter, setOpenFilter] = useState(false);
+/**
+ * The button that allows you to open the form and/or close it
+ */
+const DisplayTaskCreationForm = () => {
+    const [isCreate, setIsCreate] = useState(false);
+
+    const COLOR_BUTTON = isCreate ? "btn-danger" : "btn-primary";
+    const TEXT_BUTTON = isCreate ? "Cancel" : "Create a Task";
+    const DISPLAY_TASK_FORM = isCreate && (
+        <TaskCreationForm setIsCreate={setIsCreate} />
+    );
 
     return (
         <>
             <Button
-                className={`btn btn-light ms-3 rounded-0 ${
-                    openFilter ? "mb-0 rounded-top" : "mb-5 rounded-2"
-                }`}
                 type="button"
-                onClick={() => setOpenFilter(!openFilter)}
+                onClick={() => setIsCreate(!isCreate)}
+                className={`btn ${COLOR_BUTTON} d-block m-auto mb-5`}
             >
-                Filters
-                {!openFilter ? (
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="21"
-                        height="21"
-                        fill="#929292"
-                        className="bi bi-filter ms-2"
-                        viewBox="0 0 16 16"
-                    >
-                        <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z" />
-                    </svg>
-                ) : (
-                    <i className="bi bi-x-lg text-danger ms-2"></i>
-                )}
+                {TEXT_BUTTON}
             </Button>
-            {openFilter && (
-                <div className="d-flex justify-content-evenly align-items-center ms-3 mb-5 bg-light p-3 rounded-bottom">
-                    <SelectFilterDate />
-                    <SelectFilterChecked />
-                </div>
-            )}
+
+            {DISPLAY_TASK_FORM}
         </>
     );
 };
 
-const SelectFilterChecked = () => {
-    const { fields, handleChangeFilter } = useContext(datasContext);
-    const valueFilter = fields.lists.filter.defaultFilter;
-
-    return (
-        <div className="form-check form-switch">
-            <span className="fw-medium">By the status of the task :</span>
-            <Select
-                className="form-select form-select-sm mb-3"
-                aria-label="Select the filter for the order of the date"
-                onChange={handleChangeFilter}
-                value={valueFilter}
-                name={fields.lists.filter.name}
-                options={[
-                    {
-                        value: "allChecked",
-                        defaultValue: valueFilter === "allChecked",
-                        name: "All tasks",
-                        key: "allChecked",
-                    },
-                    {
-                        value: "checked",
-                        defaultValue: valueFilter === "checked",
-                        name: "tasks checked",
-                        key: "checked",
-                    },
-                    {
-                        value: "noChecked",
-                        defaultValue: valueFilter === "noChecked",
-                        value: "noChecked",
-                        name: "tasks unchecked",
-                        key: "noChecked",
-                    },
-                ]}
-            />
-        </div>
-    );
-};
-
-const SelectFilterDate = () => {
-    const { fields, handleChangeFilter } = useContext(datasContext);
-    const valueFilter = fields.created_at.filter.defaultFilter;
-
-    return (
-        <div className="form-check form-switch">
-            <span className="fw-medium">By date :</span>
-            <Select
-                className="form-select form-select-sm mb-3"
-                aria-label="Select the filter for the order of the date"
-                onChange={handleChangeFilter}
-                value={valueFilter}
-                name={fields.created_at.filter.name}
-                options={[
-                    {
-                        value: "desc",
-                        defaultValue: valueFilter === "desc",
-                        name: "Descending",
-                        key: "descending",
-                    },
-                    {
-                        value: "asc",
-                        defaultValue: valueFilter === "asc",
-                        name: "Ascending",
-                        key: "ascending",
-                    },
-                ]}
-            />
-        </div>
-    );
-};
-
-const TaskCreationContainer = () => {
-    const [isCreate, setIsCreate] = useState(false);
-
-    return (
-        <>
-            {!isCreate ? (
-                <Button
-                    type="button"
-                    onClick={() => setIsCreate((prevIsCreate) => !prevIsCreate)}
-                    className="btn btn-primary d-block m-auto mb-5"
-                >
-                    Create a task
-                </Button>
-            ) : (
-                <Button
-                    onClick={() => setIsCreate((prevIsCreate) => !prevIsCreate)}
-                    type="button"
-                    className="btn btn-danger d-block m-auto mb-5"
-                >
-                    Cancel
-                </Button>
-            )}
-
-            {isCreate && <TaskCreationForm setIsCreate={setIsCreate} />}
-        </>
-    );
-};
-
+/**
+ * The form of creating a task
+ * 
+ * @param {boolean} setIsCreate True if the user opened the form, false if not
+ */
 const TaskCreationForm = ({ setIsCreate }) => {
     const { register, handleSubmit, errors, handleResetErrorField } = useForm();
-    const { datas, createTask, fields } = useContext(datasContext);
-    const [countTasks, setCountTasks] = useState(1);
-    const [listsInputTask, setListsInputTask] = useState([
-        { id: `tasks_${countTasks}` },
-    ]);
+    const { handleSaveLists } = useContext(datasContext);
+    const [listsInputTask, setListsInputTask] = useState([{ id: `tasks_1` }]);
 
+    /**
+     * Embarrassment of data backup
+     *
+     * @param {object} formData Les données du formulaire
+     */
     const onSubmit = (formData) => {
-        const dataTitle = formData.get("title");
-        const lastDatas = datas[datas.length - 1];
-        const lastDatasListId = lastDatas.lists[lastDatas.lists.length - 1].id;
-
-        const listsInputSave = [];
-        let incrementId = 1;
-        listsInputTask.map((list) => {
-            listsInputSave.push({
-                id: lastDatasListId + incrementId,
-                name: formData.get(list.id),
-                checked: false,
-            });
-
-            incrementId++;
-        });
-
-        createTask(fields, {
-            id: datas.length + 1,
-            title: dataTitle,
-            lists: listsInputSave,
-            created_at: new Date(),
-        });
-        setIsCreate((prevIsCreate) => !prevIsCreate);
+        handleSaveLists(formData, listsInputTask, setIsCreate);
     };
+
+    const FORM_TITLE = "Creation of a new task";
+    const TEXT_BUTTON = "Save the task";
 
     return (
         <form
@@ -223,7 +104,7 @@ const TaskCreationForm = ({ setIsCreate }) => {
             onSubmit={(e) => handleSubmit(e, onSubmit)}
         >
             <h2 className="position-absolute top-0 start-50 translate-middle bg-white px-4 border-start border-end">
-                Creation of a task
+                {FORM_TITLE}
             </h2>
 
             <FormContext.Provider
@@ -233,8 +114,6 @@ const TaskCreationForm = ({ setIsCreate }) => {
                 <InputsTasks
                     listsInputTask={listsInputTask}
                     setListsInputTask={setListsInputTask}
-                    countTasks={countTasks}
-                    setCountTasks={setCountTasks}
                 />
             </FormContext.Provider>
 
@@ -242,49 +121,66 @@ const TaskCreationForm = ({ setIsCreate }) => {
                 type="submit"
                 className="btn btn-success mt-5 d-block m-auto"
             >
-                Save the task
+                {TEXT_BUTTON}
             </Button>
         </form>
     );
 };
 
+/**
+ * The Title field of creating a task
+ */
 const InputTitle = () => {
     const { register, errors, handleResetErrorField } = useFormContext();
 
+    const FIELD_NAME = "title";
+    const LABEL_TEXT = "Title";
+
+    /**
+     * Constant which embarrassments the state of the errors
+     */
+    const ERROR_MESSAGE = "The title field is compulsory";
+    const NOT_EMPTY_ERROR = errors.title;
+    const DISPLAY_ERRORS_TITLE = NOT_EMPTY_ERROR && (
+        <div id="title" className="invalid-feedback">
+            {errors.title}
+        </div>
+    );
+    const DISPLAY_IS_VALID = NOT_EMPTY_ERROR ? "is-invalid" : "";
+
     return (
         <div className="mb-3">
-            <Label htmlFor="title" className="form-label fw-medium">
-                Title
+            <Label htmlFor={FIELD_NAME} className="form-label fw-medium">
+                {LABEL_TEXT}
             </Label>
             <Input
-                {...register("title", {
+                {...register(FIELD_NAME, {
                     required: {
-                        message: "The title field is compulsory",
+                        message: ERROR_MESSAGE,
                     },
                 })}
-                id="title"
-                className={`form-control ${errors.title ? "is-invalid" : ""}`}
+                id={FIELD_NAME}
+                className={`form-control ${DISPLAY_IS_VALID}`}
                 type="text"
                 onClick={() => {
-                    handleResetErrorField("title");
+                    handleResetErrorField(FIELD_NAME);
                 }}
             />
 
-            {errors.title && (
-                <div id="title" className="invalid-feedback">
-                    {errors.title}
-                </div>
-            )}
+            {DISPLAY_ERRORS_TITLE}
         </div>
     );
 };
 
-const InputsTasks = ({
-    listsInputTask,
-    setListsInputTask,
-    countTasks,
-    setCountTasks,
-}) => {
+/**
+ * The fields on the list of added tasks
+ * 
+ * @param {function} listsInputTask The list of added fields
+ * @param {function} setListsInputTask The function that allows you to add a field
+ */
+const InputsTasks = ({ listsInputTask, setListsInputTask }) => {
+    const [countTasks, setCountTasks] = useState(1);
+
     /**
      * Add a task to the form
      */
@@ -320,158 +216,158 @@ const InputsTasks = ({
             ))}
             <Button
                 type="button"
-                className="btn btn-outline-primary w-100"
+                className="btn btn-outline-primary w-100 p-0"
                 onClick={handleAddTasks}
             >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="25"
-                    height="25"
-                    fill="currentColor"
-                    className="bi bi-plus-lg"
-                    viewBox="0 0 16 16"
-                >
-                    <path
-                        fillRule="evenodd"
-                        d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"
-                    />
-                </svg>
+                <i className="bi bi-patch-plus-fill fs-4"></i>
             </Button>
         </div>
     );
 };
 
+/**
+ * The fields of the list of tasks to be performed
+ * 
+ * @param {number} id The identifier of the added task
+ * @param {function} handleDeleteTask The deletion of the added input fields
+ */
 const InputTask = ({ id, handleDeleteTask }) => {
     const { register, errors, handleResetErrorField } = useFormContext();
 
+    const LABEL_TEXT = "Tasks";
+
+    /**
+     * Constant which embarrasses the state of the first input of the list
+     */
+    const DISPLAY_LABEL = id === "tasks_1" && (
+        <Label htmlFor={id} className="form-label fw-medium">
+            {LABEL_TEXT}
+        </Label>
+    );
+    const DISPLAY_BUTTON_DELETE = id !== "tasks_1" && (
+        <Button
+            type="button"
+            className="btn btn-danger btn-sm me-2"
+            onClick={() => handleDeleteTask(id)}
+        >
+            <i className="bi bi-trash"></i>
+        </Button>
+    );
+
+    /**
+     * Constant which embarrassments the state of the errors
+     */
+    const NOT_EMPTY_ERROR = errors[id];
+    const ERROR_MESSAGE = "The task field is compulsory";
+    const DISPLAY_ERRORS_LIST = NOT_EMPTY_ERROR && (
+        <div id={id} className="invalid-feedback d-block">
+            {NOT_EMPTY_ERROR}
+        </div>
+    );
+    const DISPLAY_IS_VALID = NOT_EMPTY_ERROR ? "is-invalid" : "";
+
     return (
         <>
-            {id === "tasks_1" && (
-                <Label htmlFor={id} className="form-label fw-medium">
-                    Tasks
-                </Label>
-            )}
+            {DISPLAY_LABEL}
             <div className="d-flex flex-row align-items-center">
-                {id !== "tasks_1" && (
-                    <Button
-                        type="button"
-                        className="btn btn-danger btn-sm me-2"
-                        onClick={() => handleDeleteTask(id)}
-                    >
-                        <i className="bi bi-trash"></i>
-                    </Button>
-                )}
+                {DISPLAY_BUTTON_DELETE}
 
                 <Input
                     {...register(id, {
                         required: {
-                            message: "The task field is compulsory",
+                            message: ERROR_MESSAGE,
                         },
                     })}
                     id={id}
-                    className={`form-control ${errors[id] ? "is-invalid" : ""}`}
+                    className={`form-control ${DISPLAY_IS_VALID}`}
                     type="text"
                     onClick={() => handleResetErrorField(id)}
                 />
             </div>
-            {errors[id] && (
-                <div id={id} className="invalid-feedback d-block">
-                    {errors[id]}
-                </div>
-            )}
+            {DISPLAY_ERRORS_LIST}
         </>
     );
 };
 
-const ListsTasks = ({ task }) => {
-    const { fields } = useContext(datasContext);
-
-    const shouldRenderList = (list) => {
-        return (
-            (fields.lists.filter.defaultFilter === "noChecked" &&
-                !list.checked) ||
-            (fields.lists.filter.defaultFilter === "checked" && list.checked) ||
-            fields.lists.filter.defaultFilter === "allChecked"
-        );
-    };
-
+/**
+ * The list of all tasks
+ * 
+ * @param {object} list 
+ * @returns 
+ */
+const ListsTasks = ({ list }) => {
     return (
         <ul className="border border-ligth p-0 rounded-2 mx-3 mb-5">
-            <HeaderListTask task={task} />
+            <HeaderListTask list={list} />
             <li className="list-group">
                 <ul className="p-0">
-                    {task.lists.map((list, index) => {
-                        return (
-                            shouldRenderList(list) && (
-                                <BodyListTask
-                                    key={list.id}
-                                    index={index}
-                                    task={list}
-                                />
-                            )
-                        );
-                    })}
+                    {list.tasks.map((task, index) => (
+                        <BodyListTask key={task.id} index={index} task={task} />
+                    ))}
                 </ul>
             </li>
         </ul>
     );
 };
 
-const HeaderListTask = ({ task }) => {
-    const countTaskChecked = task.lists.filter((list) => list.checked).length;
-    const filterTaskDisplay = countTaskChecked === task.lists.length;
-
-    const progressValue = Math.round(
-        (100 / task.lists.length) * countTaskChecked
+/**
+ * The header of tasks
+ * 
+ * @param {object} list 
+ */
+const HeaderListTask = ({ list }) => {
+    /**
+     * Management of the progress of the task list
+     */
+    const COUNT_TASK_CHECKED = list.tasks.filter((list) => list.checked).length;
+    const FILTER_TASK_DISPLAY = COUNT_TASK_CHECKED === list.tasks.length;
+    const PROGRESS_VALUE = Math.round(
+        (100 / list.tasks.length) * COUNT_TASK_CHECKED
     );
-    const colorBarProgress =
-        progressValue === 0
-            ? "bg-secondary"
-            : progressValue > 0 && progressValue < 35
-            ? "bg-danger"
-            : progressValue > 35 && progressValue < 70
-            ? "bg-warning"
-            : progressValue > 70 && "bg-success";
 
-    const options = { year: "numeric", month: "long", day: "numeric" };
-    const formattedDate = task.created_at.toLocaleDateString("fr-FR", options);
+    /**
+     * Format of the date of creation of a task
+     */
+    const FORMATTED_DATE = list.created_at.toLocaleDateString("fr-FR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
 
     return (
         <li
             className={`list-group d-flex flex-row justify-content-between align-items-center p-3 rounded-0 border-ligth position-relative
-            ${!filterTaskDisplay ? "border-bottom" : ""}`}
+            ${!FILTER_TASK_DISPLAY ? "border-bottom" : ""}`}
         >
-            <TaskProgressBar
-                progressValue={progressValue}
-                colorBarProgress={colorBarProgress}
-            />
+            <TaskProgressBar progressValue={PROGRESS_VALUE} />
 
             <div className="d-flex align-items-center">
                 <div className="me-3 d-flex flex-column justify-content-center">
-                    <span className="fw-semibold">{task.title}</span>
-                    <span style={{ fontSize: "0.6em" }}>{formattedDate}</span>
+                    <span className="fw-semibold">{list.title}</span>
+                    <span style={{ fontSize: "0.6em" }}>{FORMATTED_DATE}</span>
                 </div>
-                <TaskProgressBadge
-                    filterTaskDisplay={filterTaskDisplay}
-                    colorBarProgress={colorBarProgress}
-                />
+                <TaskProgressBadge progressValue={PROGRESS_VALUE} />
             </div>
         </li>
     );
 };
 
+/**
+ * The task list
+ * 
+ * @param {object} task 
+ */
 const BodyListTask = ({ task, index }) => {
-    const { updateTaskChecked } = useContext(datasContext);
+    const { handleUpdateTaskChecked } = useContext(datasContext);
 
-    const handleUpdateTaskChecked = () => {
-        updateTaskChecked(task.id);
-    };
+    const LIST_COLOR = index % 2 === 0 ? "bg-light" : "";
+    const LINE_THROUGH_LABEL = task.checked
+        ? "text-decoration-line-through"
+        : "";
 
     return (
         <li
-            className={`list-group ${
-                index % 2 === 0 ? "bg-light" : ""
-            } d-flex flex-row px-5 py-3 rounded-2`}
+            className={`list-group ${LIST_COLOR} d-flex flex-row px-5 py-3 rounded-2`}
         >
             <Input
                 className="form-check-input me-3"
@@ -481,9 +377,7 @@ const BodyListTask = ({ task, index }) => {
                 id={task.id}
             />
             <Label
-                className={`form-check-label ${
-                    task.checked ? "text-decoration-line-through" : ""
-                }`}
+                className={`form-check-label ${LINE_THROUGH_LABEL}`}
                 htmlFor={task.id}
             >
                 {task.name}
@@ -492,47 +386,97 @@ const BodyListTask = ({ task, index }) => {
     );
 };
 
-const TaskProgressBar = ({ progressValue, colorBarProgress }) => {
+/**
+ * The progression bar that determines the status of tasks
+ * 
+ * @param {number} progressValue The level of progress of the list
+ */
+const TaskProgressBar = ({ progressValue }) => {
+    /**
+     * Information on the color and text of the progression
+     */
+    const { COLOR_BAR_PROGRESS } = __getStyleProgress(progressValue);
+
+    /**
+     * Progress bar data
+     */
+    const CURRENT_VALUE = progressValue;
+    const VALUE_MIN = 0;
+    const VALUE_MAX = 100;
+    const TEXT_COLOR_PROGRESS = CURRENT_VALUE > 50 && "text-white";
+    const VALUE_PROGRESS = CURRENT_VALUE + "%";
+    const STYLE_PROGRESS_BAR_LENGTH = { width: CURRENT_VALUE + "%" };
+
     return (
         <div
             className="progress position-absolute top-0 start-50 translate-middle w-100"
             role="progressbar"
-            aria-label="Barre de progression de la tâche"
-            aria-valuenow={progressValue}
-            aria-valuemin="0"
-            aria-valuemax="100"
+            aria-label="Task progression bar"
+            aria-valuenow={CURRENT_VALUE}
+            aria-valuemin={VALUE_MIN}
+            aria-valuemax={VALUE_MAX}
         >
             <div
-                className={`position-absolute top-50 start-50 translate-middle fw-bold ${
-                    progressValue > 50 && "text-white"
-                }`}
+                className={`position-absolute top-50 start-50 translate-middle fw-bold ${TEXT_COLOR_PROGRESS}`}
             >
-                {progressValue}%
+                {VALUE_PROGRESS}
             </div>
             <div
-                className={`progress-bar ${colorBarProgress}`}
-                style={{ width: progressValue + "%" }}
+                className={`progress-bar ${COLOR_BAR_PROGRESS}`}
+                style={STYLE_PROGRESS_BAR_LENGTH}
             ></div>
         </div>
     );
 };
 
-const TaskProgressBadge = ({ filterTaskDisplay, colorBarProgress }) => {
-    let content = null;
+/**
+ * The badge that determines the status of tasks
+ * 
+ * @param {number} progressValue The level of progress of the list
+ */
+const TaskProgressBadge = ({ progressValue }) => {
+    /**
+     * Information on the color and text of the progression
+     */
+    const { COLOR_BAR_PROGRESS, TEXT_BUTTON_PROGRESS } =
+        __getStyleProgress(progressValue);
 
-    filterTaskDisplay
-        ? (content = (
-              <span className={`badge text-${colorBarProgress} py-2 px-3`}>
-                  Terminé <i className="bi bi-check-lg"></i>
-              </span>
-          ))
-        : (content = (
-              <span className={`badge text-${colorBarProgress} py-2 px-3`}>
-                  En cours <i className="bi bi-hourglass-split"></i>
-              </span>
-          ));
+    const IS_TASK_DONE = TEXT_BUTTON_PROGRESS === 'Done' && <i className="bi bi-check-lg"></i>;
 
-    return content;
+    return (
+        <span className={`badge text-${COLOR_BAR_PROGRESS} py-2 px-3`}>
+            {TEXT_BUTTON_PROGRESS} {IS_TASK_DONE}
+        </span>
+    );
+};
+
+/**
+ * Recovery of information bar information
+ *
+ * @param {number} progressValue The level of progress of the list
+ *
+ * @returns Information on the color and text of the progression
+ */
+const __getStyleProgress = (progressValue) => {
+    let COLOR_BAR_PROGRESS = "bg-secondary";
+    let TEXT_BUTTON_PROGRESS = "To Do";
+
+    switch (true) {
+        case progressValue > 0 && progressValue <= 35:
+            TEXT_BUTTON_PROGRESS = "In Progress";
+            COLOR_BAR_PROGRESS = "bg-danger";
+            break;
+        case progressValue > 35 && progressValue <= 99:
+            TEXT_BUTTON_PROGRESS = "Almost Done";
+            COLOR_BAR_PROGRESS = "bg-warning";
+            break;
+        case progressValue >= 99:
+            TEXT_BUTTON_PROGRESS = "Done";
+            COLOR_BAR_PROGRESS = "bg-success";
+            break;
+    }
+
+    return { COLOR_BAR_PROGRESS, TEXT_BUTTON_PROGRESS };
 };
 
 export default Body;
