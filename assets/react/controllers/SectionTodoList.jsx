@@ -11,11 +11,11 @@ const datasContext = createContext(null);
 /**
  *The section of the to do list
  */
-function Body() {
+function SectionTodoList() {
     return (
         <StrictMode>
-            <section>
-                <h1 className="mb-5">My tasks</h1>
+            <section id='todolist'>
+                <h1 className="mb-5 text-center shadow py-4 mb-5 bg-body-tertiary rounded">My task list...</h1>
                 <TodoTable />
             </section>
         </StrictMode>
@@ -41,7 +41,7 @@ const TodoTable = () => {
             >
                 <DisplayTaskCreationForm />
                 {lists.map((list) => (
-                    <ListsTasks key={list.id} list={list} />
+                    <TaskLists key={list.id} list={list} />
                 ))}
             </datasContext.Provider>
         </>
@@ -77,7 +77,7 @@ const DisplayTaskCreationForm = () => {
 
 /**
  * The form of creating a task
- * 
+ *
  * @param {boolean} setIsCreate True if the user opened the form, false if not
  */
 const TaskCreationForm = ({ setIsCreate }) => {
@@ -111,7 +111,7 @@ const TaskCreationForm = ({ setIsCreate }) => {
                 value={{ register, errors, handleResetErrorField }}
             >
                 <InputTitle />
-                <InputsTasks
+                <InputsTaskLists
                     listsInputTask={listsInputTask}
                     setListsInputTask={setListsInputTask}
                 />
@@ -150,7 +150,7 @@ const InputTitle = () => {
 
     return (
         <div className="mb-3">
-            <Label htmlFor={FIELD_NAME} className="form-label fw-medium">
+            <Label htmlFor={FIELD_NAME} className="form-label fw-medium mb-0">
                 {LABEL_TEXT}
             </Label>
             <Input
@@ -174,11 +174,11 @@ const InputTitle = () => {
 
 /**
  * The fields on the list of added tasks
- * 
+ *
  * @param {function} listsInputTask The list of added fields
  * @param {function} setListsInputTask The function that allows you to add a field
  */
-const InputsTasks = ({ listsInputTask, setListsInputTask }) => {
+const InputsTaskLists = ({ listsInputTask, setListsInputTask }) => {
     const [countTasks, setCountTasks] = useState(1);
 
     /**
@@ -208,7 +208,7 @@ const InputsTasks = ({ listsInputTask, setListsInputTask }) => {
         <div className="mb-3">
             {listsInputTask.map((listInput) => (
                 <div key={listInput.id} className="mb-2">
-                    <InputTask
+                    <InputTaskList
                         id={listInput.id}
                         handleDeleteTask={handleDeleteTask}
                     />
@@ -227,11 +227,11 @@ const InputsTasks = ({ listsInputTask, setListsInputTask }) => {
 
 /**
  * The fields of the list of tasks to be performed
- * 
+ *
  * @param {number} id The identifier of the added task
  * @param {function} handleDeleteTask The deletion of the added input fields
  */
-const InputTask = ({ id, handleDeleteTask }) => {
+const InputTaskList = ({ id, handleDeleteTask }) => {
     const { register, errors, handleResetErrorField } = useFormContext();
 
     const LABEL_TEXT = "Tasks";
@@ -240,7 +240,7 @@ const InputTask = ({ id, handleDeleteTask }) => {
      * Constant which embarrasses the state of the first input of the list
      */
     const DISPLAY_LABEL = id === "tasks_1" && (
-        <Label htmlFor={id} className="form-label fw-medium">
+        <Label htmlFor={id} className="form-label fw-medium mb-0">
             {LABEL_TEXT}
         </Label>
     );
@@ -291,18 +291,18 @@ const InputTask = ({ id, handleDeleteTask }) => {
 
 /**
  * The list of all tasks
- * 
- * @param {object} list 
- * @returns 
+ *
+ * @param {object} list
+ * @returns
  */
-const ListsTasks = ({ list }) => {
+const TaskLists = ({ list }) => {
     return (
         <ul className="border border-ligth p-0 rounded-2 mx-3 mb-5">
-            <HeaderListTask list={list} />
+            <HeaderTaskList list={list} />
             <li className="list-group">
                 <ul className="p-0">
                     {list.tasks.map((task, index) => (
-                        <BodyListTask key={task.id} index={index} task={task} />
+                        <BodyTaskList key={task.id} index={index} task={task} />
                     ))}
                 </ul>
             </li>
@@ -312,10 +312,10 @@ const ListsTasks = ({ list }) => {
 
 /**
  * The header of tasks
- * 
- * @param {object} list 
+ *
+ * @param {object} list
  */
-const HeaderListTask = ({ list }) => {
+const HeaderTaskList = ({ list }) => {
     /**
      * Management of the progress of the task list
      */
@@ -354,10 +354,10 @@ const HeaderListTask = ({ list }) => {
 
 /**
  * The task list
- * 
- * @param {object} task 
+ *
+ * @param {object} task
  */
-const BodyListTask = ({ task, index }) => {
+const BodyTaskList = ({ task, index }) => {
     const { handleUpdateTaskChecked } = useContext(datasContext);
 
     const LIST_COLOR = index % 2 === 0 ? "bg-light" : "";
@@ -388,7 +388,7 @@ const BodyListTask = ({ task, index }) => {
 
 /**
  * The progression bar that determines the status of tasks
- * 
+ *
  * @param {number} progressValue The level of progress of the list
  */
 const TaskProgressBar = ({ progressValue }) => {
@@ -431,7 +431,7 @@ const TaskProgressBar = ({ progressValue }) => {
 
 /**
  * The badge that determines the status of tasks
- * 
+ *
  * @param {number} progressValue The level of progress of the list
  */
 const TaskProgressBadge = ({ progressValue }) => {
@@ -441,7 +441,9 @@ const TaskProgressBadge = ({ progressValue }) => {
     const { COLOR_BAR_PROGRESS, TEXT_BUTTON_PROGRESS } =
         __getStyleProgress(progressValue);
 
-    const IS_TASK_DONE = TEXT_BUTTON_PROGRESS === 'Done' && <i className="bi bi-check-lg"></i>;
+    const IS_TASK_DONE = TEXT_BUTTON_PROGRESS === "Done" && (
+        <i className="bi bi-check-lg"></i>
+    );
 
     return (
         <span className={`badge text-${COLOR_BAR_PROGRESS} py-2 px-3`}>
@@ -479,4 +481,4 @@ const __getStyleProgress = (progressValue) => {
     return { COLOR_BAR_PROGRESS, TEXT_BUTTON_PROGRESS };
 };
 
-export default Body;
+export default SectionTodoList;
